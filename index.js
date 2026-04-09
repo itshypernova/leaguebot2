@@ -152,6 +152,26 @@ client.on('messageCreate', async (message) => {
             return message.reply('✅ You are now registered as a trainer!')
         }
 
+        // 📝 Edit Showdown Name
+        if (command === 'psedit') {
+            const showdown = args[1]
+
+            if (!showdown) {
+                return message.reply('❌ Usage: !psedit <new_showdown_name>')
+            }
+
+            try {
+                const res = await axios.post(`${API}/player/update-showdown`, {
+                    discord_id: message.author.id,
+                    showdown_name: showdown
+                })
+
+                return message.reply(`✅ Showdown name updated to **${res.data.showdown_name}**!`)
+            } catch (err) {
+                return message.reply(err.response?.data?.error || '❌ Failed to update Showdown name')
+            }
+        }
+
         // 🤝 Trade
         if (command === 'trade') {
             const mention = message.mentions.users.first()
@@ -620,6 +640,62 @@ client.on('messageCreate', async (message) => {
                 return message.reply(
                     err.response?.data?.error || '❌ Failed to give badge'
                 )
+            }
+        }
+
+        // 🎁 Give Pokémon (ADMIN)
+        if (command === 'give') {
+            if (!isAdmin(message.member, message.author.id)) {
+                return message.reply('❌ Admin only')
+            }
+
+            const mention = message.mentions.users.first()
+            const pokemonName = args.slice(2).join(' ')
+
+            if (!mention || !pokemonName) {
+                return message.reply('❌ Usage: !give @player <pokemon_name>')
+            }
+
+            try {
+                const res = await axios.post(`${API}/player/give-pokemon`, {
+                    targetDiscordId: mention.id,
+                    pokemonName
+                })
+
+                if (res.data.success) {
+                    return message.reply(`🎁 **${res.data.pokemon}** has been added to **${res.data.player}**'s box!`)
+                }
+
+            } catch (err) {
+                return message.reply(err.response?.data?.error || '❌ Failed to give Pokémon')
+            }
+        }
+
+        // 🗑️ Take Pokémon (ADMIN)
+        if (command === 'take') {
+            if (!isAdmin(message.member, message.author.id)) {
+                return message.reply('❌ Admin only')
+            }
+
+            const mention = message.mentions.users.first()
+            const pokemonName = args.slice(2).join(' ')
+
+            if (!mention || !pokemonName) {
+                return message.reply('❌ Usage: !take @player <pokemon_name>')
+            }
+
+            try {
+                const res = await axios.post(`${API}/player/take-pokemon`, {
+                    targetDiscordId: mention.id,
+                    pokemonName
+                })
+
+                if (res.data.success) {
+                    return message.reply(`🗑️ **${res.data.pokemon}** has been removed from **${res.data.player}**'s box!`)
+                }
+
+            } catch (err) {
+                return message.reply(err.response?.data?.error || '❌ Failed to take Pokémon')
             }
         }
 
